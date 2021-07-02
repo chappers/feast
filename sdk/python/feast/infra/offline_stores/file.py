@@ -64,14 +64,23 @@ class FileOfflineStore(OfflineStore):
                 f"Please provide an entity_df of type {type(pd.DataFrame)} or {type(str)} instead of type {type(entity_df)}"
             )
         if isinstance(entity_df, str):
-            for feature_view_from_registry in feature_views:
-                if feature_view_from_registry.name == entity_df:
-                    columns = feature_view_from_registry.entities + [
-                        feature_view_from_registry.input.event_timestamp_column
-                    ]
+            for feature_view in feature_views:
+                if feature_view.name == entity_df:
+                    join_keys = []
+                    for entity_name in feature_view.entities:
+                        entity = registry.get_entity(entity_name, project)
+                        join_keys.append(entity.join_key)
+
+                    columns = join_keys + [feature_view.input.event_timestamp_column]
                     entity_df = pyarrow.parquet.read_table(
-                        feature_view_from_registry.input.path, columns=columns
+                        feature_view.input.path, columns=columns
                     ).to_pandas()
+                    entity_df.rename(
+                        columns={
+                            feature_view.input.event_timestamp_column: DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL
+                        },
+                        inplace=True,
+                    )
                     break
             else:
                 raise FeatureViewNotFoundException(entity_df)

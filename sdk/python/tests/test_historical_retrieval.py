@@ -241,6 +241,87 @@ class BigQueryDataSet:
 
 
 @pytest.mark.parametrize(
+    "entity_df,entity_id,feature_refs",
+    [
+        (
+            "driver_stats",
+            "driver_id",
+            ["driver_stats:conv_rate", "driver_stats:avg_daily_trips"],
+        ),
+        (
+            "customer_profile",
+            "customer_id",
+            [
+                "customer_profile:current_balance",
+                "customer_profile:avg_passenger_count",
+                "customer_profile:lifetime_trip_count",
+            ],
+        ),
+    ],
+)
+def test_historical_features_from_parquet_sources_infer_entity_df(
+    entity_df, entity_id, feature_refs
+):
+    start_date = datetime.now().replace(microsecond=0, second=0, minute=0)
+    (customer_entities, driver_entities, end_date, _, start_date,) = generate_entities(
+        start_date, True
+    )
+
+    with TemporaryDirectory() as temp_dir:
+        driver_df = driver_data.create_driver_hourly_stats_df(
+            driver_entities, start_date, end_date
+        )
+        driver_source = stage_driver_hourly_stats_parquet_source(temp_dir, driver_df)
+        driver_fv = create_driver_hourly_stats_feature_view(driver_source)
+        customer_df = driver_data.create_customer_daily_profile_df(
+            customer_entities, start_date, end_date
+        )
+        customer_source = stage_customer_daily_profile_parquet_source(
+            temp_dir, customer_df
+        )
+        customer_fv = create_customer_daily_profile_feature_view(customer_source)
+        driver = Entity(name="driver", join_key="driver_id", value_type=ValueType.INT64)
+        customer = Entity(name="customer_id", value_type=ValueType.INT64)
+
+        store = FeatureStore(
+            config=RepoConfig(
+                registry=os.path.join(temp_dir, "registry.db"),
+                project="default",
+                provider="local",
+                online_store=SqliteOnlineStoreConfig(
+                    path=os.path.join(temp_dir, "online_store.db")
+                ),
+            )
+        )
+
+        store.apply([driver, customer, driver_fv, customer_fv])
+
+        job_implicit = store.get_historical_features(
+            entity_df=entity_df, feature_refs=feature_refs,
+        )
+
+        target_df = driver_df if entity_df == "driver_stats" else customer_df
+        target_df = target_df[[entity_id, "datetime"]].rename(
+            columns={"datetime": DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL}
+        )
+        job_explicit = store.get_historical_features(
+            entity_df=target_df, feature_refs=feature_refs,
+        )
+
+        implicit_df = job_implicit.to_df()
+        explicit_df = job_explicit.to_df()
+
+        assert_frame_equal(
+            implicit_df.sort_values(
+                by=[DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL, entity_id]
+            ).reset_index(drop=True),
+            explicit_df.sort_values(
+                by=[DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL, entity_id]
+            ).reset_index(drop=True),
+        )
+
+
+@pytest.mark.parametrize(
     "infer_event_timestamp_col", [False, True],
 )
 def test_historical_features_from_parquet_sources(infer_event_timestamp_col):

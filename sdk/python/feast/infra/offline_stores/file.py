@@ -53,6 +53,8 @@ class FileOfflineStore(OfflineStore):
         entity_df: Union[pd.DataFrame, str],
         registry: Registry,
         project: str,
+        from_date: Optional[datetime],
+        to_date: Optional[datetime],
     ) -> RetrievalJob:
         if not isinstance(entity_df, pd.DataFrame):
             raise ValueError(

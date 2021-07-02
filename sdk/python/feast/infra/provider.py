@@ -116,6 +116,8 @@ class Provider(abc.ABC):
         entity_df: Union[pandas.DataFrame, str],
         registry: Registry,
         project: str,
+        from_date: Optional[datetime],
+        to_date: Optional[datetime],
     ) -> RetrievalJob:
         pass
 

@@ -130,6 +130,8 @@ class LocalProvider(Provider):
         entity_df: Union[pd.DataFrame, str],
         registry: Registry,
         project: str,
+        from_date: Optional[datetime],
+        to_date: Optional[datetime],
     ) -> RetrievalJob:
         return self.offline_store.get_historical_features(
             config=config,
@@ -138,6 +140,8 @@ class LocalProvider(Provider):
             entity_df=entity_df,
             registry=registry,
             project=project,
+            from_date=from_date,
+            to_date=to_date,
         )
 
 

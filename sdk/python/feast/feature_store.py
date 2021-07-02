@@ -255,7 +255,11 @@ class FeatureStore:
 
     @log_exceptions_and_usage
     def get_historical_features(
-        self, entity_df: Union[pd.DataFrame, str], feature_refs: List[str],
+        self,
+        entity_df: Union[pd.DataFrame, str],
+        feature_refs: List[str],
+        from_date: Optional[datetime] = None,
+        to_date: Optional[datetime] = None,
     ) -> RetrievalJob:
         """Enrich an entity dataframe with historical feature values for either training or batch scoring.
 
@@ -312,6 +316,8 @@ class FeatureStore:
                 entity_df,
                 self._registry,
                 self.project,
+                from_date,
+                to_date,
             )
         except FeastProviderLoginError as e:
             sys.exit(e)

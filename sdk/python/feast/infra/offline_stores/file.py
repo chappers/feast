@@ -56,10 +56,26 @@ class FileOfflineStore(OfflineStore):
         from_date: Optional[datetime],
         to_date: Optional[datetime],
     ) -> RetrievalJob:
-        if not isinstance(entity_df, pd.DataFrame):
+        if not (isinstance(entity_df, pd.DataFrame) or isinstance(entity_df, str)):
             raise ValueError(
-                f"Please provide an entity_df of type {type(pd.DataFrame)} instead of type {type(entity_df)}"
+                f"Please provide an entity_df of type {type(pd.DataFrame)} or {type(str)} instead of type {type(entity_df)}"
             )
+        if isinstance(entity_df, str):
+            for feature_view_from_registry in feature_views:
+                if feature_view_from_registry.name == entity_df:
+                    columns = feature_view_from_registry.entities + [
+                        feature_view_from_registry.input.event_timestamp_column
+                    ]
+                    entity_df = pyarrow.parquet.read_table(
+                        feature_view_from_registry.input.path, columns=columns
+                    ).to_pandas()
+                    break
+            else:
+                raise ValueError(
+                    f"The provided dataset reference '{entity_df}' does not exist. "
+                    f"Valid dataset references are {[fv.name for fv in feature_views]}"
+                )
+
         entity_df_event_timestamp_col = DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL  # local modifiable copy of global variable
         if entity_df_event_timestamp_col not in entity_df.columns:
             datetime_columns = entity_df.select_dtypes(

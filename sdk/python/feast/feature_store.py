@@ -281,6 +281,8 @@ class FeatureStore:
                 SQL query. The query must be of a format supported by the configured offline store (e.g., BigQuery)
             feature_refs: A list of features that should be retrieved from the offline store. Feature references are of
                 the format "feature_view:feature", e.g., "customer_fv:daily_transactions".
+            from_date: An optional Timestamp used to filter the entity dataframe based on timestamp range (from)
+            to_date: An optional Timestamp used to filter the entity dataframe based on timestamp range (to)
 
         Returns:
             RetrievalJob which can be used to materialize the results.

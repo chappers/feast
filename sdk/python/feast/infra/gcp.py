@@ -142,6 +142,6 @@ class GcpProvider(Provider):
             registry=registry,
             project=project,
             from_date=from_date,
-            to_date=from_date,
+            to_date=to_date,
         )
         return job

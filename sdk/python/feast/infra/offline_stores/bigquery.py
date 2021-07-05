@@ -95,6 +95,8 @@ class BigQueryOfflineStore(OfflineStore):
         entity_df: Union[pandas.DataFrame, str],
         registry: Registry,
         project: str,
+        from_date: Optional[datetime],
+        to_date: Optional[datetime],
     ) -> RetrievalJob:
         # TODO: Add entity_df validation in order to fail before interacting with BigQuery
         assert isinstance(config.offline_store, BigQueryOfflineStoreConfig)

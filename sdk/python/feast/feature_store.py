@@ -255,7 +255,11 @@ class FeatureStore:
 
     @log_exceptions_and_usage
     def get_historical_features(
-        self, entity_df: Union[pd.DataFrame, str], feature_refs: List[str],
+        self,
+        entity_df: Union[pd.DataFrame, str],
+        feature_refs: List[str],
+        from_date: Optional[datetime] = None,
+        to_date: Optional[datetime] = None,
     ) -> RetrievalJob:
         """Enrich an entity dataframe with historical feature values for either training or batch scoring.
 
@@ -277,6 +281,8 @@ class FeatureStore:
                 SQL query. The query must be of a format supported by the configured offline store (e.g., BigQuery)
             feature_refs: A list of features that should be retrieved from the offline store. Feature references are of
                 the format "feature_view:feature", e.g., "customer_fv:daily_transactions".
+            from_date: An optional Timestamp used to filter the entity dataframe based on timestamp range (from)
+            to_date: An optional Timestamp used to filter the entity dataframe based on timestamp range (to)
 
         Returns:
             RetrievalJob which can be used to materialize the results.
@@ -312,6 +318,8 @@ class FeatureStore:
                 entity_df,
                 self._registry,
                 self.project,
+                from_date,
+                to_date,
             )
         except FeastProviderLoginError as e:
             sys.exit(e)

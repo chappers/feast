@@ -7,7 +7,10 @@ import pytz
 from pydantic.typing import Literal
 
 from feast.data_source import DataSource, FileSource
-from feast.errors import FeastJoinKeysDuringMaterialization
+from feast.errors import (
+    FeastJoinKeysDuringMaterialization,
+    FeatureViewNotFoundException,
+)
 from feast.feature_view import FeatureView
 from feast.infra.offline_stores.offline_store import OfflineStore, RetrievalJob
 from feast.infra.provider import (
@@ -53,11 +56,35 @@ class FileOfflineStore(OfflineStore):
         entity_df: Union[pd.DataFrame, str],
         registry: Registry,
         project: str,
+        from_date: Optional[datetime],
+        to_date: Optional[datetime],
     ) -> RetrievalJob:
-        if not isinstance(entity_df, pd.DataFrame):
+        if not (isinstance(entity_df, pd.DataFrame) or isinstance(entity_df, str)):
             raise ValueError(
-                f"Please provide an entity_df of type {type(pd.DataFrame)} instead of type {type(entity_df)}"
+                f"Please provide an entity_df of type {type(pd.DataFrame)} or {type(str)} instead of type {type(entity_df)}"
             )
+        if isinstance(entity_df, str):
+            for feature_view in feature_views:
+                if feature_view.name == entity_df:
+                    join_keys = []
+                    for entity_name in feature_view.entities:
+                        entity = registry.get_entity(entity_name, project)
+                        join_keys.append(entity.join_key)
+
+                    columns = join_keys + [feature_view.input.event_timestamp_column]
+                    entity_df = pyarrow.parquet.read_table(
+                        feature_view.input.path, columns=columns
+                    ).to_pandas()
+                    entity_df.rename(
+                        columns={
+                            feature_view.input.event_timestamp_column: DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL
+                        },
+                        inplace=True,
+                    )
+                    break
+            else:
+                raise FeatureViewNotFoundException(entity_df)
+
         entity_df_event_timestamp_col = DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL  # local modifiable copy of global variable
         if entity_df_event_timestamp_col not in entity_df.columns:
             datetime_columns = entity_df.select_dtypes(
@@ -69,13 +96,23 @@ class FileOfflineStore(OfflineStore):
                 )
                 entity_df_event_timestamp_col = datetime_columns[0]
             else:
-                raise ValueError(
+                raise Exception(
                     f"Please provide an entity_df with a column named {DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL} representing the time of events."
                 )
 
         feature_views_to_features = _get_requested_feature_views_to_features_dict(
             feature_refs, feature_views
         )
+
+        if from_date is not None and to_date is not None:
+            entity_df = entity_df[
+                (entity_df[entity_df_event_timestamp_col] >= from_date)
+                & (entity_df[entity_df_event_timestamp_col] < to_date)
+            ]
+        elif not (from_date is None and to_date is None):
+            raise Exception(
+                "Please provide both 'from_date' and 'to_date', or neither."
+            )
 
         # Create lazy function that is only called from the RetrievalJob object
         def evaluate_historical_retrieval():

@@ -365,8 +365,12 @@ def test_historical_features_from_parquet_sources(
         ),
     ],
 )
+@pytest.mark.parametrize(
+    "entity_start_date,entity_end_date",
+    [(None, None), (timedelta(days=-7), timedelta(days=-1))],
+)
 def test_historical_features_from_parquet_sources_infer_entity_df(
-    entity_df, entity_id, feature_refs
+    entity_df, entity_id, feature_refs, entity_start_date, entity_end_date
 ):
     start_date = datetime.now().replace(microsecond=0, second=0, minute=0)
     (customer_entities, driver_entities, end_date, _, start_date,) = generate_entities(
@@ -389,6 +393,11 @@ def test_historical_features_from_parquet_sources_infer_entity_df(
         driver = Entity(name="driver", join_key="driver_id", value_type=ValueType.INT64)
         customer = Entity(name="customer_id", value_type=ValueType.INT64)
 
+        start_date = (
+            start_date + entity_start_date if entity_start_date is not None else None
+        )
+        end_date = end_date + entity_end_date if entity_end_date is not None else None
+
         store = FeatureStore(
             config=RepoConfig(
                 registry=os.path.join(temp_dir, "registry.db"),
@@ -403,13 +412,30 @@ def test_historical_features_from_parquet_sources_infer_entity_df(
         store.apply([driver, customer, driver_fv, customer_fv])
 
         job_implicit = store.get_historical_features_by_view(
-            entity_df=entity_df, feature_refs=feature_refs,
+            entity_df=entity_df,
+            feature_refs=feature_refs,
+            start_date=start_date,
+            end_date=end_date,
         )
 
         target_df = driver_df if entity_df == "driver_stats" else customer_df
         target_df = target_df[[entity_id, "datetime"]].rename(
             columns={"datetime": DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL}
         )
+        target_df[DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL] = pd.to_datetime(
+            target_df[DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL], utc=True
+        )
+        if not (start_date is None and end_date is None):
+            target_df = target_df[
+                (
+                    target_df[DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL]
+                    >= pd.to_datetime(start_date, utc=True)
+                )
+                & (
+                    target_df[DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL]
+                    < pd.to_datetime(end_date, utc=True)
+                )
+            ]
         job_explicit = store.get_historical_features(
             entity_df=target_df, feature_refs=feature_refs,
         )

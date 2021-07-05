@@ -267,7 +267,14 @@ class FileOfflineStore(OfflineStore):
                     f"Please provide an entity_df with a column named {DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL} representing the time of events."
                 )
 
+        # Convert event timestamp column to datetime and normalize time zone to UTC
+        entity_df[entity_df_event_timestamp_col] = pd.to_datetime(
+            entity_df[entity_df_event_timestamp_col], utc=True
+        )
+
         if start_date is not None and end_date is not None:
+            start_date = pd.to_datetime(start_date, utc=True)
+            end_date = pd.to_datetime(end_date, utc=True)
             entity_df = entity_df[
                 (entity_df[entity_df_event_timestamp_col] >= start_date)
                 & (entity_df[entity_df_event_timestamp_col] < end_date)

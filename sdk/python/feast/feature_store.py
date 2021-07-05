@@ -16,6 +16,7 @@ from collections import Counter, OrderedDict, defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
+from warnings import warn
 
 import pandas as pd
 from colorama import Fore, Style
@@ -319,6 +320,85 @@ class FeatureStore:
             self.project,
             full_feature_names,
         )
+
+        return job
+
+    @log_exceptions_and_usage
+    def get_historical_features_by_view(
+        self,
+        entity_df: Union[pd.DataFrame, str],
+        feature_refs: List[str],
+        start_date: Optional[datetime],
+        end_date: Optional[datetime],
+    ) -> RetrievalJob:
+        """Enrich an entity dataframe with historical feature values for either training or batch scoring.
+
+        This method joins historical feature data from one or more feature views to an entity dataframe by using a time
+        travel join.
+
+        Each feature view is joined to the entity dataframe using all entities configured for the respective feature
+        view. All configured entities must be available in the entity dataframe. Therefore, the entity dataframe must
+        contain all entities found in all feature views, but the individual feature views can have different entities.
+
+        Time travel is based on the configured TTL for each feature view. A shorter TTL will limit the
+        amount of scanning that will be done in order to find feature data for a specific entity key. Setting a short
+        TTL may result in null values being returned.
+
+        Args:
+            entity_df (Union[pd.DataFrame, str]): An entity dataframe is a collection of rows containing all entity
+                columns (e.g., customer_id, driver_id) on which features need to be joined, as well as a event_timestamp
+                column used to ensure point-in-time correctness. Either a Pandas DataFrame can be provided or a string
+                SQL query. The query must be of a format supported by the configured offline store (e.g., BigQuery)
+            feature_refs: A list of features that should be retrieved from the offline store. Feature references are of
+                the format "feature_view:feature", e.g., "customer_fv:daily_transactions".
+            start_date (datetime): Start date for time range of data to filter the feature view before retrieving 
+                features.
+            end_date (datetime): End date for time range of data to filter the feature view before retrieving
+                features.
+
+
+        Returns:
+            RetrievalJob which can be used to materialize the results.
+
+        Examples:
+            Retrieve historical features using a BigQuery SQL entity dataframe
+
+            >>> from feast.feature_store import FeatureStore
+            >>>
+            >>> fs = FeatureStore(config=RepoConfig(provider="gcp"))
+            >>> retrieval_job = fs.get_historical_features(
+            >>>     entity_df="SELECT event_timestamp, order_id, customer_id from gcp_project.my_ds.customer_orders",
+            >>>     feature_refs=["customer:age", "customer:avg_orders_1d", "customer:avg_orders_7d"]
+            >>> )
+            >>> feature_data = retrieval_job.to_df()
+            >>> model.fit(feature_data) # insert your modeling framework here.
+        """
+
+        all_feature_views = self._registry.list_feature_views(project=self.project)
+        try:
+            feature_views = _get_requested_feature_views(
+                feature_refs, all_feature_views
+            )
+        except FeatureViewNotFoundException as e:
+            sys.exit(e)
+
+        provider = self._get_provider()
+        try:
+            warn(
+                "This API is experimental and may change without any deprecation cycle in a future release."
+            )
+            job = provider.get_historical_features_by_view(
+                self.config,
+                feature_views,
+                feature_refs,
+                entity_df,
+                self._registry,
+                self.project,
+                start_date,
+                end_date,
+            )
+        except FeastProviderLoginError as e:
+            sys.exit(e)
 
         return job
 

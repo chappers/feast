@@ -211,6 +211,19 @@ class FileOfflineStore(OfflineStore):
         return job
 
     @staticmethod
+    def get_historical_features_by_view(
+        config: RepoConfig,
+        feature_views: List[FeatureView],
+        feature_refs: List[str],
+        entity_df: Union[pd.DataFrame, str],
+        registry: Registry,
+        project: str,
+        start_date: Optional[datetime],
+        end_date: Optional[datetime],
+    ):
+        raise NotImplemented
+
+    @staticmethod
     def pull_latest_from_table_or_query(
         config: RepoConfig,
         data_source: DataSource,

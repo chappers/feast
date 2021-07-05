@@ -328,8 +328,8 @@ class FeatureStore:
         self,
         entity_df: Union[pd.DataFrame, str],
         feature_refs: List[str],
-        start_date: Optional[datetime],
-        end_date: Optional[datetime],
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
     ) -> RetrievalJob:
         """Enrich an entity dataframe with historical feature values for either training or batch scoring.
 

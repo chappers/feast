@@ -121,6 +121,32 @@ class Provider(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def get_historical_features(
+        self,
+        config: RepoConfig,
+        feature_views: List[FeatureView],
+        feature_refs: List[str],
+        entity_df: Union[pandas.DataFrame, str],
+        registry: Registry,
+        project: str,
+    ) -> RetrievalJob:
+        pass
+
+    @abc.abstractmethod
+    def get_historical_features_by_view(
+        self,
+        config: RepoConfig,
+        feature_views: List[FeatureView],
+        feature_refs: List[str],
+        entity_df: Union[pandas.DataFrame, str],
+        registry: Registry,
+        project: str,
+        start_date: Optional[datetime],
+        end_date: Optional[datetime],
+    ) -> RetrievalJob:
+        pass
+
+    @abc.abstractmethod
     def online_read(
         self,
         config: RepoConfig,

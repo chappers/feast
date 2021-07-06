@@ -159,7 +159,7 @@ class BigQueryOfflineStore(OfflineStore):
         start_date: Optional[datetime],
         end_date: Optional[datetime],
     ):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 def _assert_expected_columns_in_dataframe(

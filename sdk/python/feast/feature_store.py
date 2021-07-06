@@ -352,11 +352,10 @@ class FeatureStore:
                 SQL query. The query must be of a format supported by the configured offline store (e.g., BigQuery)
             feature_refs: A list of features that should be retrieved from the offline store. Feature references are of
                 the format "feature_view:feature", e.g., "customer_fv:daily_transactions".
-            start_date (datetime): Start date for time range of data to filter the feature view before retrieving 
+            start_date (datetime): Start date for time range of data to filter the feature view before retrieving
                 features.
             end_date (datetime): End date for time range of data to filter the feature view before retrieving
                 features.
-
 
         Returns:
             RetrievalJob which can be used to materialize the results.

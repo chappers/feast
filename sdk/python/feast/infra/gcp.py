@@ -152,8 +152,8 @@ class GcpProvider(Provider):
         entity_df: Union[pandas.DataFrame, str],
         registry: Registry,
         project: str,
-        start_date: datetime,
-        end_date: datetime,
+        start_date: Optional[datetime],
+        end_date: Optional[datetime],
     ) -> RetrievalJob:
         job = self.offline_store.get_historical_features_by_view(
             config=config,

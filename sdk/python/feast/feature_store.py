@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from collections import Counter, OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -330,11 +330,12 @@ class FeatureStore:
         feature_refs: List[str],
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
+        full_feature_names: bool=False,
     ) -> RetrievalJob:
-        """Enrich an entity dataframe with historical feature values for either training or batch scoring.
+        """Retrieve historical feature values for either training or batch scoring based on feature view.
 
-        This method joins historical feature data from one or more feature views to an entity dataframe by using a time
-        travel join.
+        This method enables using a feature view to join and/or create historical feature data from one or more
+        feature views to an entity dataframe by using a time travel join.
 
         Each feature view is joined to the entity dataframe using all entities configured for the respective feature
         view. All configured entities must be available in the entity dataframe. Therefore, the entity dataframe must
@@ -373,32 +374,26 @@ class FeatureStore:
             >>> feature_data = retrieval_job.to_df()
             >>> model.fit(feature_data) # insert your modeling framework here.
         """
-
         all_feature_views = self._registry.list_feature_views(project=self.project)
-        try:
-            feature_views = _get_requested_feature_views(
-                feature_refs, all_feature_views
-            )
-        except FeatureViewNotFoundException as e:
-            sys.exit(e)
+
+        _validate_feature_refs(feature_refs, full_feature_names)
+        feature_views = list(
+            view for view, _ in _group_feature_refs(feature_refs, all_feature_views)
+        )
 
         provider = self._get_provider()
-        try:
-            warn(
-                "This API is experimental and may change without any deprecation cycle in a future release."
-            )
-            job = provider.get_historical_features_by_view(
-                self.config,
-                feature_views,
-                feature_refs,
-                entity_df,
-                self._registry,
-                self.project,
-                start_date,
-                end_date,
-            )
-        except FeastProviderLoginError as e:
-            sys.exit(e)
+
+        job = provider.get_historical_features_by_view(
+            self.config,
+            feature_views,
+            feature_refs,
+            entity_df,
+            self._registry,
+            self.project,
+            start_date,
+            end_date,
+            full_feature_names,
+        )
 
         return job
 

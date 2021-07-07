@@ -232,7 +232,7 @@ class FileOfflineStore(OfflineStore):
 
         if isinstance(entity_df, str):
             for feature_view in feature_views:
-                assert isinstance(feature_view, FileSource)
+                assert isinstance(feature_view.input, FileSource)
                 if feature_view.name == entity_df:
                     join_keys = []
                     for entity_name in feature_view.entities:

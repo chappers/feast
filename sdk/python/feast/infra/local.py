@@ -152,6 +152,7 @@ class LocalProvider(Provider):
         project: str,
         start_date: Optional[datetime],
         end_date: Optional[datetime],
+        full_feature_names: bool,
     ) -> RetrievalJob:
         return self.offline_store.get_historical_features_by_view(
             config=config,
@@ -162,6 +163,7 @@ class LocalProvider(Provider):
             project=project,
             start_date=start_date,
             end_date=end_date,
+            full_feature_names=full_feature_names,
         )
 
 

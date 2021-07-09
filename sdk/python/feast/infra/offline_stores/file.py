@@ -223,6 +223,7 @@ class FileOfflineStore(OfflineStore):
         project: str,
         start_date: Optional[datetime],
         end_date: Optional[datetime],
+        full_feature_names: bool,
     ):
         if not (isinstance(entity_df, pd.DataFrame) or isinstance(entity_df, str)):
             raise ValueError(
@@ -286,7 +287,13 @@ class FileOfflineStore(OfflineStore):
             )
 
         return FileOfflineStore.get_historical_features(
-            config, feature_views, feature_refs, entity_df, registry, project,
+            config,
+            feature_views,
+            feature_refs,
+            entity_df,
+            registry,
+            project,
+            full_feature_names,
         )
 
     @staticmethod

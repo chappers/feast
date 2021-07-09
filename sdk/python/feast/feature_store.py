@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from collections import OrderedDict, defaultdict
+from collections import Counter, OrderedDict, defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -330,7 +330,7 @@ class FeatureStore:
         feature_refs: List[str],
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        full_feature_names: bool=False,
+        full_feature_names: bool = False,
     ) -> RetrievalJob:
         """Retrieve historical feature values for either training or batch scoring based on feature view.
 
@@ -356,6 +356,9 @@ class FeatureStore:
                 features.
             end_date (datetime): End date for time range of data to filter the feature view before retrieving
                 features.
+            full_feature_names: A boolean that provides the option to add the feature view prefixes to the feature names,
+                changing them from the format "feature" to "feature_view__feature" (e.g., "daily_transactions" changes to
+                "customer_fv__daily_transactions"). By default, this value is set to False.
 
         Returns:
             RetrievalJob which can be used to materialize the results.
@@ -365,14 +368,17 @@ class FeatureStore:
 
             >>> from feast.feature_store import FeatureStore
             >>>
-            >>> fs = FeatureStore(config=RepoConfig(provider="gcp"))
-            >>> retrieval_job = fs.get_historical_features(
-            >>>     entity_df="SELECT event_timestamp, order_id, customer_id from gcp_project.my_ds.customer_orders",
+            >>> fs = FeatureStore(config=RepoConfig(provider="local"))
+            >>> retrieval_job = fs.get_historical_features_by_view(
+            >>>     entity_df="customer",
             >>>     feature_refs=["customer:age", "customer:avg_orders_1d", "customer:avg_orders_7d"]
             >>> )
             >>> feature_data = retrieval_job.to_df()
             >>> model.fit(feature_data) # insert your modeling framework here.
         """
+        warn(
+            "This API is experimental and may change without any deprecation cycle in a future release."
+        )
         all_feature_views = self._registry.list_feature_views(project=self.project)
 
         _validate_feature_refs(feature_refs, full_feature_names)

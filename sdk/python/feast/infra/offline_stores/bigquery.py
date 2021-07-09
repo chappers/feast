@@ -158,6 +158,7 @@ class BigQueryOfflineStore(OfflineStore):
         project: str,
         start_date: Optional[datetime],
         end_date: Optional[datetime],
+        full_feature_names: bool,
     ):
         raise NotImplementedError
 

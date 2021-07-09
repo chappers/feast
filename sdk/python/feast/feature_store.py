@@ -330,7 +330,8 @@ class FeatureStore:
         feature_refs: List[str],
         full_feature_names: bool = False,
     ) -> RetrievalJob:
-        """Enrich an entity dataframe with historical feature values for either training or batch scoring.
+        """Enrich an entity dataframe with historical feature values for either training or batch scoring with latest
+        features only.
 
         This method joins historical feature data from one or more feature views to an entity dataframe by using a time
         travel join.
@@ -370,6 +371,9 @@ class FeatureStore:
             >>> feature_data = retrieval_job.to_df()
             >>> model.fit(feature_data) # insert your modeling framework here.
         """
+        warn(
+            "This API is experimental and may change without any deprecation cycle in a future release."
+        )
         all_feature_views = self._registry.list_feature_views(project=self.project)
 
         _validate_feature_refs(feature_refs, full_feature_names)

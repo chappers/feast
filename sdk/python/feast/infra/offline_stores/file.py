@@ -220,7 +220,49 @@ class FileOfflineStore(OfflineStore):
         project: str,
         full_feature_names: bool = False,
     ) -> RetrievalJob:
-        pass
+        if not isinstance(entity_df, pd.DataFrame):
+            raise ValueError(
+                f"Please provide an entity_df of type {type(pd.DataFrame)} instead of type {type(entity_df)}"
+            )
+        entity_df_event_timestamp_col = DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL  # local modifiable copy of global variable
+        if entity_df_event_timestamp_col not in entity_df.columns:
+            datetime_columns = entity_df.select_dtypes(
+                include=["datetime", "datetimetz"]
+            ).columns
+            if len(datetime_columns) == 1:
+                print(
+                    f"Using {datetime_columns[0]} as the event timestamp. To specify a column explicitly, please name it {DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL}."
+                )
+                entity_df_event_timestamp_col = datetime_columns[0]
+            else:
+                raise ValueError(
+                    f"Please provide an entity_df with a column named {DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL} representing the time of events."
+                )
+
+        # take first row by entity
+        join_keys = []
+        for feature_view in feature_views:
+            for entity_name in feature_view.entities:
+                entity = registry.get_entity(entity_name, project)
+                join_keys.append(entity.join_key)
+        entity_df = (
+            entity_df.sort_values(
+                join_keys + [entity_df_event_timestamp_col], ascending=False
+            )
+            .groupby(join_keys)
+            .first()
+            .reset_index()
+        )
+
+        return FileOfflineStore.get_historical_features(
+            config,
+            feature_views,
+            feature_refs,
+            entity_df,
+            registry,
+            project,
+            full_feature_names,
+        )
 
     @staticmethod
     def pull_latest_from_table_or_query(

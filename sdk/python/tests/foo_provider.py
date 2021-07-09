@@ -68,6 +68,7 @@ class FooProvider(Provider):
         pass
 
     def get_latest_features(
+        self,
         config: RepoConfig,
         feature_views: List[FeatureView],
         feature_refs: List[str],

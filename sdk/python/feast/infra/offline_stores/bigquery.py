@@ -148,6 +148,18 @@ class BigQueryOfflineStore(OfflineStore):
         job = BigQueryRetrievalJob(query=query, client=client, config=config)
         return job
 
+    @staticmethod
+    def get_latest_features(
+        config: RepoConfig,
+        feature_views: List[FeatureView],
+        feature_refs: List[str],
+        entity_df: Union[pandas.DataFrame, str],
+        registry: Registry,
+        project: str,
+        full_feature_names: bool = False,
+    ) -> RetrievalJob:
+        pass
+
 
 def _assert_expected_columns_in_dataframe(
     join_keys: Set[str], entity_df_event_timestamp_col: str, entity_df: pandas.DataFrame

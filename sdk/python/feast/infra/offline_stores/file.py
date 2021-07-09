@@ -211,6 +211,18 @@ class FileOfflineStore(OfflineStore):
         return job
 
     @staticmethod
+    def get_latest_features(
+        config: RepoConfig,
+        feature_views: List[FeatureView],
+        feature_refs: List[str],
+        entity_df: Union[pd.DataFrame, str],
+        registry: Registry,
+        project: str,
+        full_feature_names: bool = False,
+    ) -> RetrievalJob:
+        pass
+
+    @staticmethod
     def pull_latest_from_table_or_query(
         config: RepoConfig,
         data_source: DataSource,

@@ -67,6 +67,17 @@ class FooProvider(Provider):
     ) -> RetrievalJob:
         pass
 
+    def get_latest_features(
+        config: RepoConfig,
+        feature_views: List[FeatureView],
+        feature_refs: List[str],
+        entity_df: Union[pandas.DataFrame, str],
+        registry: Registry,
+        project: str,
+        full_feature_names: bool = False,
+    ) -> RetrievalJob:
+        pass
+
     def online_read(
         self,
         config: RepoConfig,

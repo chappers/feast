@@ -121,6 +121,19 @@ class Provider(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def get_latest_features(
+        self,
+        config: RepoConfig,
+        feature_views: List[FeatureView],
+        feature_refs: List[str],
+        entity_df: Union[pandas.DataFrame, str],
+        registry: Registry,
+        project: str,
+        full_feature_names: bool,
+    ) -> RetrievalJob:
+        pass
+
+    @abc.abstractmethod
     def online_read(
         self,
         config: RepoConfig,

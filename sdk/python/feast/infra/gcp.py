@@ -143,3 +143,24 @@ class GcpProvider(Provider):
             full_feature_names=full_feature_names,
         )
         return job
+
+    def get_latest_features(
+        self,
+        config: RepoConfig,
+        feature_views: List[FeatureView],
+        feature_refs: List[str],
+        entity_df: Union[pandas.DataFrame, str],
+        registry: Registry,
+        project: str,
+        full_feature_names: bool,
+    ) -> RetrievalJob:
+        job = self.offline_store.get_latest_features(
+            config=config,
+            feature_views=feature_views,
+            feature_refs=feature_refs,
+            entity_df=entity_df,
+            registry=registry,
+            project=project,
+            full_feature_names=full_feature_names,
+        )
+        return job

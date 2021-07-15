@@ -118,6 +118,7 @@ class RedshiftOfflineStore(OfflineStore):
     ):
         pass
 
+
 class RedshiftRetrievalJob(RetrievalJob):
     def __init__(self, query: str, redshift_client, s3_resource, config: RepoConfig):
         """Initialize RedshiftRetrievalJob object.

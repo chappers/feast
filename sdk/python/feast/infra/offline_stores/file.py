@@ -227,7 +227,6 @@ class FileOfflineStore(OfflineStore):
     ):
         if not (isinstance(entity_df, pd.DataFrame) or isinstance(entity_df, str)):
             raise ValueError(
-                f"Please provide an entity_df of type {type(pd.DataFrame)} instead of type {type(entity_df)}"
                 f"Please provide an entity_df of type {type(pd.DataFrame)} or {type(str)} instead of type {type(entity_df)}"
             )
 

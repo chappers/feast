@@ -347,7 +347,7 @@ def test_historical_features_from_parquet_sources(
 
 
 @pytest.mark.parametrize(
-    "entity_df,entity_id,feature_refs",
+    "entity_view,entity_id,feature_refs",
     [
         (
             "driver_stats",
@@ -370,7 +370,7 @@ def test_historical_features_from_parquet_sources(
     [(None, None), (timedelta(days=-7), timedelta(days=-1))],
 )
 def test_historical_features_from_parquet_sources_infer_entity_df(
-    entity_df, entity_id, feature_refs, entity_start_date, entity_end_date
+    entity_view, entity_id, feature_refs, entity_start_date, entity_end_date
 ):
     start_date = datetime.now().replace(microsecond=0, second=0, minute=0)
     (customer_entities, driver_entities, end_date, _, start_date,) = generate_entities(
@@ -412,13 +412,13 @@ def test_historical_features_from_parquet_sources_infer_entity_df(
         store.apply([driver, customer, driver_fv, customer_fv])
 
         job_implicit = store.get_historical_features_by_view(
-            entity_df=entity_df,
+            entity_view=entity_view,
             feature_refs=feature_refs,
             start_date=start_date,
             end_date=end_date,
         )
 
-        target_df = driver_df if entity_df == "driver_stats" else customer_df
+        target_df = driver_df if entity_view == "driver_stats" else customer_df
         target_df = target_df[[entity_id, "datetime"]].rename(
             columns={"datetime": DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL}
         )

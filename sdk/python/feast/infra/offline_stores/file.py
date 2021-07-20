@@ -218,40 +218,40 @@ class FileOfflineStore(OfflineStore):
         config: RepoConfig,
         feature_views: List[FeatureView],
         feature_refs: List[str],
-        entity_df: Union[pd.DataFrame, str],
+        entity_view: str,
         registry: Registry,
         project: str,
         start_date: Optional[datetime],
         end_date: Optional[datetime],
         full_feature_names: bool,
     ):
-        if not (isinstance(entity_df, pd.DataFrame) or isinstance(entity_df, str)):
+        if not isinstance(entity_view, str):
             raise ValueError(
-                f"Please provide an entity_df of type {type(pd.DataFrame)} or {type(str)} instead of type {type(entity_df)}"
+                f"Please provide an entity_view of type {type(str)} instead of type {type(entity_view)}"
             )
 
-        if isinstance(entity_df, str):
-            for feature_view in feature_views:
-                assert isinstance(feature_view.input, FileSource)
-                if feature_view.name == entity_df:
-                    join_keys = []
-                    for entity_name in feature_view.entities:
-                        entity = registry.get_entity(entity_name, project)
-                        join_keys.append(entity.join_key)
+        # construct entity_df
+        for feature_view in feature_views:
+            assert isinstance(feature_view.input, FileSource)
+            if feature_view.name == entity_view:
+                join_keys = []
+                for entity_name in feature_view.entities:
+                    entity = registry.get_entity(entity_name, project)
+                    join_keys.append(entity.join_key)
 
-                    columns = join_keys + [feature_view.input.event_timestamp_column]
-                    entity_df = pyarrow.parquet.read_table(
-                        feature_view.input.path, columns=columns
-                    ).to_pandas()
-                    entity_df.rename(
-                        columns={
-                            feature_view.input.event_timestamp_column: DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL
-                        },
-                        inplace=True,
-                    )
-                    break
-            else:
-                raise FeatureViewNotFoundException(entity_df)
+                columns = join_keys + [feature_view.input.event_timestamp_column]
+                entity_df = pyarrow.parquet.read_table(
+                    feature_view.input.path, columns=columns
+                ).to_pandas()
+                entity_df.rename(
+                    columns={
+                        feature_view.input.event_timestamp_column: DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL
+                    },
+                    inplace=True,
+                )
+                break
+        else:
+            raise FeatureViewNotFoundException(entity_view)
 
         entity_df_event_timestamp_col = DEFAULT_ENTITY_DF_EVENT_TIMESTAMP_COL  # local modifiable copy of global variable
         if entity_df_event_timestamp_col not in entity_df.columns:

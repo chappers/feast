@@ -344,7 +344,7 @@ class FeatureStore:
     @log_exceptions_and_usage
     def get_historical_features_by_view(
         self,
-        entity_df: Union[pd.DataFrame, str],
+        entity_view: str,
         feature_refs: List[str],
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
@@ -364,10 +364,8 @@ class FeatureStore:
         TTL may result in null values being returned.
 
         Args:
-            entity_df (Union[pd.DataFrame, str]): An entity dataframe is a collection of rows containing all entity
-                columns (e.g., customer_id, driver_id) on which features need to be joined, as well as a event_timestamp
-                column used to ensure point-in-time correctness. Either a Pandas DataFrame can be provided or a string
-                SQL query. The query must be of a format supported by the configured offline store (e.g., BigQuery)
+            entity_view (str): An entity view is a string which references the view in which the entity dataframe is
+                to be inferred from. The view must exist as a "feature_view". 
             feature_refs: A list of features that should be retrieved from the offline store. Feature references are of
                 the format "feature_view:feature", e.g., "customer_fv:daily_transactions".
             start_date (datetime): Start date for time range of data to filter the feature view before retrieving
@@ -410,7 +408,7 @@ class FeatureStore:
             self.config,
             feature_views,
             feature_refs,
-            entity_df,
+            entity_view,
             self._registry,
             self.project,
             start_date,

@@ -81,7 +81,7 @@ class OfflineStore(ABC):
         config: RepoConfig,
         feature_views: List[FeatureView],
         feature_refs: List[str],
-        entity_df: Union[pd.DataFrame, str],
+        entity_view: str,
         registry: Registry,
         project: str,
         start_date: Optional[datetime],
